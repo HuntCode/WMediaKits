@@ -192,4 +192,4 @@ void WDecoder::OnError(const char* what, int av_errnum) {
   }
 }
 
-}  // namespace openscreen::cast
+}  // namespace wmediakits

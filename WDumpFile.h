@@ -7,7 +7,6 @@ extern "C" {
 #include <libavutil/avutil.h>
 #include <libavutil/frame.h>
 #include <libavutil/imgutils.h>
-#include <libswresample/swresample.h>
 }
 
 /*
