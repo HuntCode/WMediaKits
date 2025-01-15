@@ -15,7 +15,7 @@ std::atomic<int> WSDLPlayer::s_instanceCount = 0;
 
 WSDLPlayer::WSDLPlayer(std::shared_ptr<ISDLEventHandler> eventHandler)
     : m_audioDevice(0), m_window(nullptr), m_renderer(nullptr), m_texture(nullptr),
-      m_videoWidth(0), m_videoHeight(0), m_eventHandler(eventHandler)
+      m_videoWidth(0), m_videoHeight(0), m_eventHandler(eventHandler), m_onDisconnect(nullptr)
 {
     {
         std::lock_guard<std::mutex> lock(m_initMutex);
@@ -94,6 +94,11 @@ void WSDLPlayer::ProcessAudio(uint8_t* buffer, int bufSize)
         m_audioQueue.push(std::vector<uint8_t>(buffer, buffer + bufSize));
     }
     m_audioCV.notify_one();
+}
+
+void WSDLPlayer::RegisterOnDisconnect(OnDisconnect handler)
+{
+    m_onDisconnect = handler;
 }
 
 void WSDLPlayer::InitDecoder()
@@ -243,6 +248,9 @@ void WSDLPlayer::HandleEvents()
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
                 m_quit = true;
+                if (m_onDisconnect) {
+                    m_onDisconnect();
+                }
             }
             break;
         case SDL_MOUSEBUTTONDOWN:

@@ -10,6 +10,7 @@
 #include <atomic>
 #include <iostream>
 #include <vector>
+#include <functional>
 
 #include "WDecoder.h"
 
@@ -36,6 +37,8 @@ public:
 };
 
 class WSDLPlayer : public WDecoder::Client {
+    typedef std::function<void()> OnDisconnect;
+
 public:
     WSDLPlayer(std::shared_ptr<ISDLEventHandler> eventHandler);
     ~WSDLPlayer();
@@ -46,6 +49,8 @@ public:
 
     void ProcessVideo(uint8_t* buffer, int bufSize);
     void ProcessAudio(uint8_t* buffer, int bufSize);
+
+    void RegisterOnDisconnect(OnDisconnect handler);
 
 private:
     void InitDecoder();
@@ -111,6 +116,8 @@ private:
     std::mutex m_queueMutex;
 
     std::shared_ptr<ISDLEventHandler> m_eventHandler;
+
+    OnDisconnect m_onDisconnect;
 };
 
 }  // namespace wmediakits
