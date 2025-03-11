@@ -33,7 +33,12 @@ WDecoder::WDecoder() {
 #endif  // LIBAVCODEC_VERSION_MAJOR < 59
 }
 
-WDecoder::~WDecoder() = default;
+WDecoder::~WDecoder() {
+    if (context_ && context_->extradata) {
+        av_free(context_->extradata);
+        context_->extradata = NULL;
+    }
+}
 
 void WDecoder::SetCodecName(const std::string& codec_name) {
     codec_name_ = codec_name;
@@ -53,10 +58,13 @@ void WDecoder::Decode(unsigned char* data, int data_len) {
     OnError("av_parser_parse2", bytes_consumed);
     return;
   }
-  if (!packet_->data) {
-    OnError("av_parser_parse2 found no packet", AVERROR_BUFFER_TOO_SMALL);
-    return;
-  }
+  //if (!packet_->data) {
+  //  OnError("av_parser_parse2 found no packet", AVERROR_BUFFER_TOO_SMALL);
+  //  return;
+  //}
+
+  packet_->data = data;
+  packet_->size = data_len;
 
   // Send the packet to the decoder.
   const int send_packet_result =
@@ -88,6 +96,8 @@ void WDecoder::Decode(unsigned char* data, int data_len) {
 }
 
 bool WDecoder::Initialize() {
+    av_log(NULL, AV_LOG_INFO, "FFmpeg configuration:\n%s\n", avcodec_configuration());
+
   // NOTE: The codec_name values found in OFFER messages, such as "vp8" or
   // "h264" or "opus" are valid input strings to FFMPEG's look-up function, so
   // no translation is required here.
@@ -97,7 +107,7 @@ bool WDecoder::Initialize() {
     return false;
   }
   std::cout << "Found codec: " << codec_name_ << " (known to FFMPEG as "
-               << avcodec_get_name(codec_->id) << ')';
+               << avcodec_get_name(codec_->id) << ')' << std::endl;
 
   parser_ = MakeUniqueAVCodecParserContext(codec_->id);
   if (!parser_) {
@@ -111,6 +121,13 @@ bool WDecoder::Initialize() {
     HandleInitializationError("failed to allocate codec context",
                               AVERROR(ENOMEM));
     return false;
+  }
+
+  if (codec_name_ == "libfdk_aac") {
+      uint8_t eld_conf[] = { 0xF8, 0xE8, 0x50, 0x00 };
+      context_->extradata = (uint8_t*)av_malloc(sizeof(eld_conf));
+      memcpy(context_->extradata, eld_conf, sizeof(eld_conf));
+      context_->extradata_size = sizeof(eld_conf);
   }
 
   // This should always be greater than zero, so that decoding doesn't block the

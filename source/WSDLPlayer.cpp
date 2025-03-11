@@ -41,16 +41,16 @@ WSDLPlayer::~WSDLPlayer()
     {
         std::lock_guard<std::mutex> lock(m_initMutex);
         if (--s_instanceCount == 0) {
-            SDL_Quit();
+            //SDL_Quit();
         }
     }
 }
 
-void WSDLPlayer::Init(const std::string& name)
+void WSDLPlayer::Init(const std::string& name, const std::string& acodec_name, const std::string& vcodec_name)
 {
     m_winName = name;
 
-    InitDecoder();
+    InitDecoder(acodec_name, vcodec_name);
 
     m_audioThread = std::thread(&WSDLPlayer::AudioThreadFunc, this);
     m_videoThread = std::thread(&WSDLPlayer::VideoThreadFunc, this);
@@ -101,12 +101,12 @@ void WSDLPlayer::RegisterOnDisconnect(OnDisconnect handler)
     m_onDisconnect = handler;
 }
 
-void WSDLPlayer::InitDecoder()
+void WSDLPlayer::InitDecoder(const std::string& acodec_name, const std::string& vcodec_name)
 {
-    m_audioDecoder.SetCodecName("opus");
+    m_audioDecoder.SetCodecName(acodec_name); //"opus"
     m_audioDecoder.SetClient(this);
 
-    m_videoDecoder.SetCodecName("vp8");
+    m_videoDecoder.SetCodecName(vcodec_name); //"vp8"
     m_videoDecoder.SetClient(this);
 }
 

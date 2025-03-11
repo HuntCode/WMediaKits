@@ -43,7 +43,7 @@ public:
     WSDLPlayer(std::shared_ptr<ISDLEventHandler> eventHandler);
     ~WSDLPlayer();
 
-    void Init(const std::string & name);
+    void Init(const std::string & name, const std::string& acodec_name, const std::string& vcodec_name);
     void Play();
     void Stop();
 
@@ -53,7 +53,7 @@ public:
     void RegisterOnDisconnect(OnDisconnect handler);
 
 private:
-    void InitDecoder();
+    void InitDecoder(const std::string& acodec_name, const std::string& vcodec_name);
     void VideoThreadFunc();
     void AudioThreadFunc();
     void Render();
