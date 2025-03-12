@@ -96,7 +96,7 @@ void WDecoder::Decode(unsigned char* data, int data_len) {
 }
 
 bool WDecoder::Initialize() {
-    av_log(NULL, AV_LOG_INFO, "FFmpeg configuration:\n%s\n", avcodec_configuration());
+    //av_log(NULL, AV_LOG_INFO, "FFmpeg configuration:\n%s\n", avcodec_configuration());
 
   // NOTE: The codec_name values found in OFFER messages, such as "vp8" or
   // "h264" or "opus" are valid input strings to FFMPEG's look-up function, so
