@@ -195,6 +195,7 @@ void WSDLPlayer::CreateWindowAndRenderer(int width, int height)
         return;
     }
 
+    SDL_RaiseWindow(m_window); // 强制窗口获取焦点
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
     m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED);
@@ -247,9 +248,11 @@ void WSDLPlayer::HandleEvents()
             break;
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
-                m_quit = true;
-                if (m_onDisconnect) {
-                    m_onDisconnect();
+                if (IsEventForWindow(event, m_window)) {
+                    m_quit = true;
+                    if (m_onDisconnect) {
+                        m_onDisconnect();
+                    }
                 }
             }
             break;
