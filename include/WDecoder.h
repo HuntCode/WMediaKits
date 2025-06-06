@@ -32,6 +32,8 @@ class WDecoder {
   Client* GetClient() const { return client_; }
   void SetClient(Client* client) { client_ = client; }
 
+  bool IsInit() { return codec_ != nullptr; }
+
   void SetCodecName(const std::string& codec_name);
 
   void Decode(unsigned char* data, int data_len);

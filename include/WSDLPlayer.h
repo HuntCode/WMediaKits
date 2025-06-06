@@ -52,8 +52,12 @@ public:
 
     void RegisterOnDisconnect(OnDisconnect handler);
 
+    void InitAudioDecoder(const std::string& acodec_name);
+    void InitVideoDecoder(const std::string& vcodec_name);
+
+    bool HasAudioDecoder();
+    bool HasVideoDecoder();
 private:
-    void InitDecoder(const std::string& acodec_name, const std::string& vcodec_name);
     void VideoThreadFunc();
     void AudioThreadFunc();
     void Render();

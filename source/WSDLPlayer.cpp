@@ -50,9 +50,10 @@ void WSDLPlayer::Init(const std::string& name, const std::string& acodec_name, c
 {
     m_winName = name;
 
-    InitDecoder(acodec_name, vcodec_name);
-
+    InitAudioDecoder(acodec_name);
     m_audioThread = std::thread(&WSDLPlayer::AudioThreadFunc, this);
+
+    InitVideoDecoder(vcodec_name);
     m_videoThread = std::thread(&WSDLPlayer::VideoThreadFunc, this);
 }
 
@@ -101,13 +102,28 @@ void WSDLPlayer::RegisterOnDisconnect(OnDisconnect handler)
     m_onDisconnect = handler;
 }
 
-void WSDLPlayer::InitDecoder(const std::string& acodec_name, const std::string& vcodec_name)
+void WSDLPlayer::InitAudioDecoder(const std::string& acodec_name)
 {
-    m_audioDecoder.SetCodecName(acodec_name); //"opus"
-    m_audioDecoder.SetClient(this);
+    if (!HasAudioDecoder() && !acodec_name.empty()) {
+        m_audioDecoder.SetCodecName(acodec_name); //"opus"
+        m_audioDecoder.SetClient(this);
+    }
+}
 
-    m_videoDecoder.SetCodecName(vcodec_name); //"vp8"
-    m_videoDecoder.SetClient(this);
+void WSDLPlayer::InitVideoDecoder(const std::string& vcodec_name)
+{
+    if (!HasVideoDecoder() && !vcodec_name.empty()) {
+        m_videoDecoder.SetCodecName(vcodec_name); //"vp8"
+        m_videoDecoder.SetClient(this);
+    }
+}
+
+bool WSDLPlayer::HasAudioDecoder() {
+    return m_audioDecoder.IsInit();
+}
+
+bool WSDLPlayer::HasVideoDecoder() {
+    return m_videoDecoder.IsInit();
 }
 
 void WSDLPlayer::VideoThreadFunc()
