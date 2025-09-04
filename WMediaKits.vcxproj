@@ -23,12 +23,14 @@
     <ClInclude Include="include\WBigEndian.h" />
     <ClInclude Include="include\WDecoder.h" />
     <ClInclude Include="include\WDumpFile.h" />
+    <ClInclude Include="include\WMPVPlayer.h" />
     <ClInclude Include="include\WSDLPlayer.h" />
     <ClInclude Include="include\WUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\WDecoder.cpp" />
     <ClCompile Include="source\WDumpFile.cpp" />
+    <ClCompile Include="source\WMPVPlayer.cpp" />
     <ClCompile Include="source\WSDLPlayer.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -133,7 +135,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)third_party\ffmpeg\windows\Win64\include;$(SolutionDir)third_party\WMediaKits\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)third_party\ffmpeg\windows\Win64\include;$(SolutionDir)third_party\WMediaKits\include;$(ProjectDir)third_party\libmpv\windows\x64\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -142,8 +144,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>$(SolutionDir)third_party\ffmpeg\windows\Win64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)third_party\ffmpeg\windows\Win64\lib;$(ProjectDir)third_party\libmpv\windows\x64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;postproc.lib;swresample.lib;swscale.lib;libmpv.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

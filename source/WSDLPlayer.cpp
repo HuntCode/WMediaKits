@@ -51,22 +51,24 @@ void WSDLPlayer::Init(const std::string& name, const std::string& acodec_name, c
     m_winName = name;
 
     InitAudioDecoder(acodec_name);
-    m_audioThread = std::thread(&WSDLPlayer::AudioThreadFunc, this);
-
     InitVideoDecoder(vcodec_name);
-    m_videoThread = std::thread(&WSDLPlayer::VideoThreadFunc, this);
 }
 
 void WSDLPlayer::Play()
 {
+    m_audioThread = std::thread(&WSDLPlayer::AudioThreadFunc, this);
+    m_videoThread = std::thread(&WSDLPlayer::VideoThreadFunc, this);
     m_quit = false;
-    // SDL main loop
-    while (!m_quit) {
-        HandleEvents();
-        HandleCustomEvents();
-        Render();
-        SDL_Delay(10); // Delay to reduce CPU usage
-    }
+
+    std::thread([this]() {
+        // SDL main loop
+        while (!m_quit) {
+            HandleEvents();
+            HandleCustomEvents();
+            Render();
+            SDL_Delay(10); // Delay to reduce CPU usage
+        }
+	}).detach();
 }
 
 void WSDLPlayer::Stop()
