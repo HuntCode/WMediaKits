@@ -68,11 +68,15 @@ void WSDLPlayer::Play()
             Render();
             SDL_Delay(10); // Delay to reduce CPU usage
         }
+
+        std::cerr << "WSDLPlayer::Play thread exit!!! " << std::endl;
+
 	}).detach();
 }
 
 void WSDLPlayer::Stop()
 {
+    std::cerr << "WSDLPlayer::Stop!!! " << std::endl;
     m_quit = true;
     m_audioCV.notify_all();
     m_videoCV.notify_all();
@@ -261,9 +265,6 @@ void WSDLPlayer::HandleEvents()
     while (SDL_PollEvent(&event)) {
         //std::cout << "event.type " << event.type << std::endl;
         switch (event.type) {
-        case SDL_QUIT:
-            m_quit = true;
-            break;
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
                 if (IsEventForWindow(event, m_window)) {

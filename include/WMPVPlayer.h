@@ -5,6 +5,7 @@
 #include <atomic>
 #include <functional>
 #include <thread>
+#include <mutex>
 
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
@@ -23,29 +24,49 @@ public:
         Stretch 
     }; // 等比/裁剪铺满/拉伸铺满
 
+    struct PlaybackInfo {
+        double position = 0.0;   // 当前秒
+        double duration = 0.0;   // 总时长（0 代表 live/未知）
+        double rate = 1.0;   // 播放速度
+        bool   paused = false; // 是否暂停
+        bool   seekable = false; // 是否可定位
+        int    width = 0;     // 可视宽（像素）
+        int    height = 0;     // 可视高（像素）
+        // 缓存/缓冲相关（可选项，尽量给出）
+        int    buffering_state = 0;   // 0=无缓冲, 1=缓冲中（mpv 的 cache-buffering-state）
+        int    buffering_percent = 0;   // 缓冲百分比
+        double cache_duration = 0.0; // 前向缓存时长（秒）（demuxer-cache-state.cache-duration）
+        double bw_bytes = 0.0; // 后向缓存字节数
+        double fw_bytes = 0.0; // 前向缓存字节数
+        std::string vcodec;             // 视频编码名
+        std::string acodec;             // 音频编码名
+
+        bool is_live() const { return duration <= 0.0 && !seekable; }
+    };
+
     WMPVPlayer();
     ~WMPVPlayer();
 
-    // 初始化窗口 + OpenGL + mpv（还不开始播放）
-    // title: 窗口标题  w/h: 初始窗口大小（逻辑点）
     bool Init(const std::string& title = "WMPVPlayer",
               int default_w = 1280, int default_h = 720,
               FillMode defaultFill = FillMode::Contain);
 
-    // 开始播放一个 HLS（或任意 url）地址；startSeconds > 0 将从指定秒数开始
+    // 开始播放一个 HLS（或任意 url）地址 
+    // startSeconds > 0 将从指定秒数开始
     bool Play(const std::string& url, double startSeconds = 0.0);
-
-    // 停止播放并释放 mpv/GL/window
     void Stop();
 
     void RegisterOnDisconnect(OnDisconnect handler);
 
     // 控制（可在运行时随时调用）
     void TogglePause();            // 空格同款
-    void Seek(double sec); // 正=快进，负=快退
+    void SeekRelative(double sec); // 正=快进，负=快退
+	void SeekTo(double sec);       // 直接跳转到指定秒数
     void AddVolume(int delta);     // +-音量
     void SetRate(double rate);     // 倍速
     void SetFillMode(FillMode m);  // 画面填充策略
+
+    bool GetPlaybackInfo(PlaybackInfo& out) const;
 
 private:
     // 线程方法
@@ -97,6 +118,13 @@ private:
 
 	// 回调
     OnDisconnect m_onDisconnect;
+
+    // 播放信息快照（任意线程读，播放器线程写）
+    mutable std::mutex m_infoMx;
+    PlaybackInfo       m_info;
+
+    // 保存 mpv 的 nominal speed（不考虑 pause）
+    std::atomic<double> m_speedRaw{ 1.0 };
 };
 
 }  // namespace wmediakits
