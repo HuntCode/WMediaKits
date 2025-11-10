@@ -1,5 +1,7 @@
 #include <cmath>
 #include <cstdio>
+#include <chrono>
+#include <thread>
 
 #include "WMPVPlayer.h"
 
@@ -216,12 +218,37 @@ void WMPVPlayer::threadFunc()
 
 	applyFillMode();
 
-    const char* cmd[] = { "loadfile", m_url.c_str(), nullptr };
-    mpv_command_async(m_mpv, 0, cmd);
+    //const char* cmd[] = { "loadfile", m_url.c_str(), nullptr };
+    //mpv_command_async(m_mpv, 0, cmd);
+
+    //if (m_startSeconds > 0.0) {
+    //    double pos = m_startSeconds;
+    //    mpv_set_property_async(m_mpv, 0, "time-pos", MPV_FORMAT_DOUBLE, &pos);
+    //}
 
     if (m_startSeconds > 0.0) {
-        double pos = m_startSeconds;
-        mpv_set_property_async(m_mpv, 0, "time-pos", MPV_FORMAT_DOUBLE, &pos);
+        char start_opt[64];
+        // 按 mpv 语法来，支持小数即可
+        snprintf(start_opt, sizeof(start_opt), "start=%f", m_startSeconds);
+
+        const char* cmd[] = {
+            "loadfile",
+            m_url.c_str(),
+            "replace",   // flags
+            "-1",        // index: -1 表示不特别指定，只是占位，兼容 0.38+ 的签名
+            start_opt,   // per-file options：这里就带上 start
+            nullptr
+        };
+        mpv_command_async(m_mpv, 0, cmd);
+    }
+    else {
+        const char* cmd[] = {
+            "loadfile",
+            m_url.c_str(),
+            "replace",
+            nullptr
+        };
+        mpv_command_async(m_mpv, 0, cmd);
     }
 
     while (!m_quit.load()) {
@@ -242,7 +269,10 @@ void WMPVPlayer::threadFunc()
             if (e.window.event == SDL_WINDOWEVENT_CLOSE) {
                 if (IsEventForWindow(e, m_win)) {
                     m_quit = true;
+                    
                     std::thread([this] { 
+                        TogglePause();
+                        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
                         if (m_onDisconnect) {
                             m_onDisconnect();
                         }
