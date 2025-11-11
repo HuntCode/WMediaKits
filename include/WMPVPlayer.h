@@ -125,6 +125,11 @@ private:
 
     // 保存 mpv 的 nominal speed（不考虑 pause）
     std::atomic<double> m_speedRaw{ 1.0 };
+
+	// 处理B站这种延迟seek的情况，onPlay时还没有播放，后续紧跟了seek请求
+    std::atomic<bool> file_loaded{ false };
+    std::atomic<bool> have_pending_seek{ false };
+    std::atomic<double> pending_seek_pos{ 0.0 };
 };
 
 }  // namespace wmediakits

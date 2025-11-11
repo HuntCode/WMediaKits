@@ -110,6 +110,12 @@ void WMPVPlayer::SeekTo(double pos_sec)
 {
     if (!m_mpv) return;
 
+    if (!file_loaded.load()) {
+        pending_seek_pos.store(pos_sec);
+        have_pending_seek.store(true);
+        return;
+    }
+
     // 可选夹紧（避免负值；有时 duration 取不到就不做上限夹紧）
     if (pos_sec < 0.0) pos_sec = 0.0;
 
@@ -245,7 +251,6 @@ void WMPVPlayer::threadFunc()
         const char* cmd[] = {
             "loadfile",
             m_url.c_str(),
-            "replace",
             nullptr
         };
         mpv_command_async(m_mpv, 0, cmd);
@@ -488,6 +493,14 @@ void WMPVPlayer::handleMpvEvents()
             // 初始化一次快照
             {
                 std::lock_guard<std::mutex> lk(m_infoMx);
+
+                file_loaded.store(true);
+
+                if (have_pending_seek.exchange(false)) {
+                    double pos = pending_seek_pos.load();
+                    mpv_set_property_async(m_mpv, 0, "time-pos", MPV_FORMAT_DOUBLE, &pos);
+                }
+
                 int seekable = 0, paused = 0;
                 double pos = 0.0, dur = 0.0, speed = 1.0;
                 int64_t dw = 0, dh = 0;
