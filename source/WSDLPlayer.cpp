@@ -82,6 +82,11 @@ void WSDLPlayer::Stop()
 
     if (m_audioThread.joinable()) m_audioThread.join();
     if (m_videoThread.joinable()) m_videoThread.join();
+
+    if (m_pcmDumpFile) {
+        fclose(m_pcmDumpFile);
+        m_pcmDumpFile = nullptr;
+    }
 }
 
 void WSDLPlayer::ProcessVideo(uint8_t* buffer, int bufSize)
@@ -386,19 +391,60 @@ void WSDLPlayer::OnFrameDecoded(const AVFrame& frame)
                 return;
             }
             SDL_PauseAudioDevice(m_audioDevice, 0); // resume audio play
+
+            // 第一次创建 audio device 时顺便打开 dump 文件
+            if (m_enablePcmDump && !m_pcmDumpFile) {
+                m_pcmDumpFile = fopen("C:\\A_ReservedLand\\alac_dump.pcm", "wb");
+                if (!m_pcmDumpFile) {
+                    std::cerr << "Failed to open pcm dump file\n";
+                    m_enablePcmDump = false; // 打不开就不要再尝试写了
+                }
+            }
         }
 
         int channels = frame.ch_layout.nb_channels;
         int sample_size = av_get_bytes_per_sample((AVSampleFormat)frame.format);  // 每个样本的字节数
         int frame_size = frame.nb_samples;
 
+        const int byte_count = frame.nb_samples * channels * sample_size;
         if (av_sample_fmt_is_planar((AVSampleFormat)frame.format)) {
-            std::vector<uint8_t> interleaved_audio_buffer;
-            InterleaveAudioSamples(&frame, interleaved_audio_buffer);
+            interleaved_audio_buffer.resize(byte_count);
+            switch (sample_size) {
+            case 1:
+                InterleaveAudioSamples<uint8_t>(frame.data, channels,
+                    frame.nb_samples,
+                    &interleaved_audio_buffer[0]);
+                break;
+            case 2:
+                InterleaveAudioSamples<uint16_t>(frame.data, channels,
+                    frame.nb_samples,
+                    &interleaved_audio_buffer[0]);
+                break;
+            case 4:
+                InterleaveAudioSamples<uint32_t>(frame.data, channels,
+                    frame.nb_samples,
+                    &interleaved_audio_buffer[0]);
+                break;
+            default:
+                std::cerr << "Error sample_size=" << sample_size;
+                return;
+            }
+
+            //InterleaveAudioSamples(&frame, interleaved_audio_buffer);
             SDL_QueueAudio(m_audioDevice, interleaved_audio_buffer.data(), interleaved_audio_buffer.size());
+
+            // dump PCM：interleaved_audio_buffer 已经是交错格式
+            if (m_enablePcmDump && m_pcmDumpFile) {
+                fwrite(interleaved_audio_buffer.data(), 1,
+                    interleaved_audio_buffer.size(), m_pcmDumpFile);
+            }
         }
         else {
-            SDL_QueueAudio(m_audioDevice, frame.data[0], sample_size * frame_size * channels);
+            const int bytes = sample_size * frame_size * channels;
+            SDL_QueueAudio(m_audioDevice, frame.data[0], bytes);
+            if (m_enablePcmDump && m_pcmDumpFile) {
+                fwrite(frame.data[0], 1, bytes, m_pcmDumpFile);
+            }
         }
     }
 }

@@ -27,4 +27,26 @@ inline void InterleaveAudioSamples(const AVFrame* frame, std::vector<uint8_t>& i
     swr_free(&swrCtx);
 }
 
+// Convert `num_channels` separate `planes` of audio, each containing
+// `num_samples` samples, into a single array of `interleaved` samples. The
+// memory backing all of the input arrays and the output array is assumed to be
+// suitably aligned.
+template <typename Element>
+void InterleaveAudioSamples(const uint8_t* const planes[],
+    int num_channels,
+    int num_samples,
+    uint8_t* interleaved) {
+    
+    // Note: This could be optimized with SIMD intrinsics for much better
+    // performance.
+    auto* dest = reinterpret_cast<Element*>(interleaved);
+    for (int ch = 0; ch < num_channels; ++ch) {
+        auto* const src = reinterpret_cast<const Element*>(planes[ch]);
+        for (int i = 0; i < num_samples; ++i) {
+            dest[i * num_channels] = src[i];
+        }
+        ++dest;
+    }
+}
+
 #endif // WMEDIAKITS_UTILS_H

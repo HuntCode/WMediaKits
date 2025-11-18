@@ -122,6 +122,11 @@ private:
     std::shared_ptr<ISDLEventHandler> m_eventHandler;
 
     OnDisconnect m_onDisconnect;
+
+    FILE* m_pcmDumpFile = nullptr;
+    bool  m_enablePcmDump = false;   // 想开就开
+
+    std::vector<uint8_t> interleaved_audio_buffer;
 };
 
 }  // namespace wmediakits
