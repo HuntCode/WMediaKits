@@ -324,15 +324,15 @@ SDL_AudioFormat WSDLPlayer::GetSDLAudioFormat(AVSampleFormat format) {
 
     case AV_SAMPLE_FMT_S16P:
     case AV_SAMPLE_FMT_S16:
-        return IsBigEndianArchitecture() ? AUDIO_S16MSB : AUDIO_S16LSB;
+        return AUDIO_S16SYS;
 
     case AV_SAMPLE_FMT_S32P:
     case AV_SAMPLE_FMT_S32:
-        return IsBigEndianArchitecture() ? AUDIO_S32MSB : AUDIO_S32LSB;
+        return AUDIO_S32SYS;
 
     case AV_SAMPLE_FMT_FLTP:
     case AV_SAMPLE_FMT_FLT:
-        return IsBigEndianArchitecture() ? AUDIO_F32MSB : AUDIO_F32LSB;
+        return AUDIO_F32SYS;
 
     default:
         // Either NONE, or the 64-bit formats are unsupported.
