@@ -25,7 +25,7 @@ public:
     }; // 等比/裁剪铺满/拉伸铺满
 
     struct PlaybackInfo {
-        double position = -1.0;   // 当前秒
+        double position = 0.0;   // 当前秒
         double duration = 0.0;   // 总时长（0 代表 live/未知）
         double rate = 1.0;   // 播放速度
         bool   paused = false; // 是否暂停
