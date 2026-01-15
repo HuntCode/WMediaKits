@@ -188,7 +188,13 @@ bool WDecoder::Initialize() {
   // NOTE: The codec_name values found in OFFER messages, such as "vp8" or
   // "h264" or "opus" are valid input strings to FFMPEG's look-up function, so
   // no translation is required here.
-  codec_ = avcodec_find_decoder_by_name(codec_name_.c_str());
+  if (codec_name_ == "aac-eld") {
+      codec_ = avcodec_find_decoder_by_name("aac");
+  }
+  else {
+      codec_ = avcodec_find_decoder_by_name(codec_name_.c_str());
+  }
+
   if (!codec_) {
     HandleInitializationError("codec not available", AVERROR(EINVAL));
     return false;
@@ -215,11 +221,16 @@ bool WDecoder::Initialize() {
     return false;
   }
 
-  if (codec_name_ == "libfdk_aac") {
+  if (codec_name_ == "aac-eld") {
       uint8_t eld_conf[] = { 0xF8, 0xE8, 0x50, 0x00 };
-      context_->extradata = (uint8_t*)av_malloc(sizeof(eld_conf));
+      context_->extradata = (uint8_t*)av_malloc(sizeof(eld_conf) + AV_INPUT_BUFFER_PADDING_SIZE);
       memcpy(context_->extradata, eld_conf, sizeof(eld_conf));
+      memset(context_->extradata + sizeof(eld_conf), 0, AV_INPUT_BUFFER_PADDING_SIZE);
       context_->extradata_size = sizeof(eld_conf);
+
+      AVChannelLayout ch_layout = AV_CHANNEL_LAYOUT_STEREO;
+      av_channel_layout_copy(&context_->ch_layout, &ch_layout);
+      context_->sample_rate = 44100;
   }
 
   // 新增：ALAC 分支
